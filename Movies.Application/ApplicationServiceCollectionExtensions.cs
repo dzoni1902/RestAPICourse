@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Movies.Application.Database;
 using Movies.Application.Repositories;
 
 namespace Movies.Application
@@ -18,5 +19,12 @@ namespace Movies.Application
             return services;
         }
 
+        public static IServiceCollection AddDatabase(this IServiceCollection services, string connectionString)
+        {
+            // Singleton masks Transient (factory returns new connection every time)
+            services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
+            services.AddSingleton<DbInitializer>();
+            return services;
+        }
     }
 }
