@@ -33,6 +33,13 @@ namespace Movies.Application.Database
                                             BEGIN
                                                 CREATE UNIQUE INDEX movies_slug_idx ON Movies (Slug);
                                             END");
+
+            await connection.ExecuteAsync(@"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Genres')
+                                            BEGIN
+                                                CREATE TABLE Genres (
+                                                    MovieId UNIQUEIDENTIFIER REFERENCES Movies (Id),
+                                                    Name NVARCHAR(255) NOT NULL);
+                                            END");
         } 
     }
 }

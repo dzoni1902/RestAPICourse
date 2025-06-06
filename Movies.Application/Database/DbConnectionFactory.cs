@@ -8,11 +8,6 @@ using Microsoft.Data.SqlClient;
 
 namespace Movies.Application.Database
 {
-    public interface IDbConnectionFactory
-    {
-        Task<IDbConnection> CreateConnectionAsync();
-    }
-
     public class DbConnectionFactory : IDbConnectionFactory
     {
         private readonly string _connectionString;
