@@ -10,7 +10,7 @@
 
             public const string Create = Base;
 
-            public const string Get = $"{Base}/{{id:guid}}"; //escape the {}
+            public const string Get = $"{Base}/{{idOrSlug}}"; //escape the {}
 
             public const string GetAll = Base;
 
