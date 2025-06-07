@@ -18,16 +18,17 @@ namespace Movies.Application.Repositories
             _dbConnectionFactory = dbConnectionFactory;
         }
 
-        public async Task<bool> CreateAsync(Movie movie)
+        public async Task<bool> CreateAsync(Movie movie, CancellationToken token = default)
         {
-            using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
             using var transaction = connection.BeginTransaction();
 
-            var result = await connection.ExecuteAsync(new CommandDefinition(
+            var result = await connection.ExecuteAsync(new CommandDefinition(   //commandDefinition allows us to send also cancellation token
                 @"INSERT INTO Movies (Id, Slug, Title, YearOfRelease)
                     VALUES (@Id, @Slug, @Title, @YearOfRelease);",
                 movie,
-                transaction: transaction
+                transaction: transaction,
+                cancellationToken: token
             ));
 
             if (result > 0)
@@ -37,7 +38,8 @@ namespace Movies.Application.Repositories
                     await connection.ExecuteAsync(new CommandDefinition(
                         @"INSERT INTO Genres (MovieId, Name) VALUES (@MovieId, @Name);",
                         new { MovieId = movie.Id, Name = genre },
-                        transaction: transaction
+                        transaction: transaction,
+                        cancellationToken: token
                     ));
                 }
             }
@@ -46,14 +48,15 @@ namespace Movies.Application.Repositories
             return result > 0;
         }
 
-        public async Task<Movie?> GetByIdAsync(Guid id)
+        public async Task<Movie?> GetByIdAsync(Guid id, CancellationToken token = default)
         {
-            using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
             var movie = await connection.QuerySingleOrDefaultAsync<Movie>(
                 new CommandDefinition(
                 @"SELECT * FROM Movies 
                   WHERE Id = @Id;",
-                new { Id = id }));
+                new { Id = id },
+                cancellationToken: token));
 
             if (movie == null)
             {
@@ -64,7 +67,8 @@ namespace Movies.Application.Repositories
                 new CommandDefinition(
                 @"SELECT Name FROM Genres 
                   WHERE MovieId = @MovieId;",
-                new { MovieId = id }));
+                new { MovieId = id }, 
+                cancellationToken: token));
 
             foreach (var genre in genres)
             {
@@ -75,9 +79,9 @@ namespace Movies.Application.Repositories
         }
 
 
-        public async Task<bool> DeleteByIdAsync(Guid id)
+        public async Task<bool> DeleteByIdAsync(Guid id, CancellationToken token = default)
         {
-            using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
             using var transaction = connection.BeginTransaction();
 
             // First delete genres associated with the movie
@@ -85,7 +89,8 @@ namespace Movies.Application.Repositories
                 @"DELETE FROM Genres 
                   WHERE MovieId = @MovieId;",
                 new { MovieId = id },
-                transaction: transaction
+                transaction: transaction,
+                cancellationToken: token
             ));
 
             // Then delete the movie itself
@@ -93,7 +98,8 @@ namespace Movies.Application.Repositories
                 @"DELETE FROM Movies 
                   WHERE Id = @Id;",
                 new { Id = id },
-                transaction: transaction
+                transaction: transaction,
+                cancellationToken: token
             ));
 
             if (result > 0)
@@ -108,24 +114,26 @@ namespace Movies.Application.Repositories
             }
         }
 
-        public async Task<bool> ExistsByIdAsync(Guid id)
+        public async Task<bool> ExistsByIdAsync(Guid id, CancellationToken token = default)
         {
-            using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
             return await connection.ExecuteScalarAsync<bool>(
                 new CommandDefinition(
                 @"SELECT COUNT(*) > 0 FROM Movies 
                   WHERE Id = @Id;",
-                new { Id = id }));
+                new { Id = id },
+                cancellationToken: token));
         }
 
-        public async Task<IEnumerable<Movie>> GetAllAsync()
+        public async Task<IEnumerable<Movie>> GetAllAsync(CancellationToken token = default)
         {
-            using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
             var result = await connection.QueryAsync(new CommandDefinition(
                 @"SELECT m.*, STRING_AGG(g.name, ',') AS genres
                   FROM movies m 
                   LEFT JOIN genres g ON m.id = g.movieid
-                  GROUP BY m.id, m.slug, m.title, m.YearOfRelease"));
+                  GROUP BY m.id, m.slug, m.title, m.YearOfRelease",
+                cancellationToken: token));
 
             return result.Select(r => new Movie
             {
@@ -137,14 +145,15 @@ namespace Movies.Application.Repositories
         }
 
         
-        public async Task<Movie?> GetBySlugAsync(string slug)
+        public async Task<Movie?> GetBySlugAsync(string slug, CancellationToken token = default)
         {
-            using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
             var movie = await connection.QuerySingleOrDefaultAsync<Movie>(
                 new CommandDefinition(
                 @"SELECT * FROM Movies 
                   WHERE Slug = @Slug;",
-                new { Slug = slug }));
+                new { Slug = slug },
+                cancellationToken: token));
 
             if (movie == null)
             {
@@ -155,7 +164,8 @@ namespace Movies.Application.Repositories
                 new CommandDefinition(
                 @"SELECT Name FROM Genres 
                   WHERE MovieId = @MovieId;",
-                new { MovieId = movie.Id }));
+                new { MovieId = movie.Id },
+                cancellationToken: token));
 
             foreach (var genre in genres)
             {
@@ -165,15 +175,16 @@ namespace Movies.Application.Repositories
             return movie;
         }
 
-        public async Task<bool> UpdateAsync(Movie movie)
+        public async Task<bool> UpdateAsync(Movie movie, CancellationToken token = default)
         {
-            using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
             using var transaction = connection.BeginTransaction();
 
             await connection.ExecuteAsync(new CommandDefinition(
                 @"DELETE FROM Genres WHERE MovieId = @MovieId",
                 new { MovieId = movie.Id },
-                transaction: transaction
+                transaction: transaction,
+                cancellationToken: token
                 ));
 
             foreach (var genre in movie.Genres)
@@ -181,7 +192,8 @@ namespace Movies.Application.Repositories
                 await connection.ExecuteAsync(new CommandDefinition(
                     @"INSERT INTO Genres (MovieId, Name) VALUES (@MovieId, @Name);",
                     new { MovieId = movie.Id, Name = genre },
-                    transaction: transaction
+                    transaction: transaction,
+                    cancellationToken: token
                 ));
             }
 
@@ -190,7 +202,8 @@ namespace Movies.Application.Repositories
                   SET Slug = @Slug, Title = @Title, YearOfRelease = @YearOfRelease 
                   WHERE Id = @Id;",
                 movie,
-                transaction: transaction
+                transaction: transaction,
+                cancellationToken: token
             ));
 
             if (result > 0)
