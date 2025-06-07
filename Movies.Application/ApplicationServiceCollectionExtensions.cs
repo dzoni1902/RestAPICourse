@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Movies.Application.Database;
 using Movies.Application.Repositories;
+using Movies.Application.Services;
 
 namespace Movies.Application
 
@@ -16,6 +17,7 @@ namespace Movies.Application
         {
             // Register application services here
             services.AddSingleton<IMovieRepository, MovieRepository>();
+            services.AddSingleton<IMovieService, MovieService>();    //no shared state in the MovieService, doesnt have to be anything else
             return services;
         }
 
