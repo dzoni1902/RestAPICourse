@@ -40,6 +40,14 @@ namespace Movies.Application.Database
                                                     MovieId UNIQUEIDENTIFIER REFERENCES Movies (Id),
                                                     Name NVARCHAR(255) NOT NULL);
                                             END");
+
+            await connection.ExecuteAsync(@"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Ratings' AND xtype='U')
+                                            BEGIN
+                                                CREATE TABLE Ratings (Userid UNIQUEIDENTIFIER,
+                                                                      Movieid UNIQUEIDENTIFIER FOREIGN KEY REFERENCES Movies(id),
+                                                                      Rating INT NOT NULL,
+                                                                      PRIMARY KEY (Userid, Movieid));
+                                            END");
         } 
     }
 }

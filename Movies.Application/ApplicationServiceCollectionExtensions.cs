@@ -17,6 +17,7 @@ namespace Movies.Application
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
             // Register application services here
+            services.AddSingleton<IRatingRepository, RatingRepository>();
             services.AddSingleton<IMovieRepository, MovieRepository>();
             services.AddSingleton<IMovieService, MovieService>();    //no shared state in the MovieService, doesnt have to be anything else
             services.AddValidatorsFromAssemblyContaining<IApplicationMarker>(ServiceLifetime.Singleton);
