@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Dapper;
 using Movies.Application.Database;
+using Movies.Application.Models;
 
 namespace Movies.Application.Repositories
 {
@@ -41,6 +42,25 @@ namespace Movies.Application.Repositories
                 WHERE movieid = @movieId",
                 new { MovieId = movieId, UserId = userId },
                 cancellationToken: token));
+        }
+
+        public async Task<bool> RateMovieAsync(Guid movieId, int rating, Guid userId, CancellationToken token = default)
+        {
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
+
+            var result = await connection.ExecuteAsync(new CommandDefinition(
+                @"MERGE Ratings AS target
+                USING (SELECT @UserId AS UserId, @MovieId AS MovieId, @Rating AS Rating) AS source
+                ON target.UserId = source.UserId AND target.MovieId = source.MovieId
+                WHEN MATCHED THEN 
+                    UPDATE SET Rating = source.Rating
+                WHEN NOT MATCHED THEN 
+                    INSERT (UserId, MovieId, Rating)
+                    VALUES (source.UserId, source.MovieId, source.Rating);",
+                new { MovieId = movieId, UserId = userId, Rating = rating },
+                cancellationToken: token));
+
+            return result > 0;
         }
     }
 }

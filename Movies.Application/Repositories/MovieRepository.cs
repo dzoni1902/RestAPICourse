@@ -55,7 +55,7 @@ namespace Movies.Application.Repositories
             var movie = await connection.QuerySingleOrDefaultAsync<Movie>(
                 new CommandDefinition(
                 @"SELECT m.*,
-                       ROUND(AVG(r.rating), 1) AS rating,
+                       ROUND(AVG(CAST(r.rating AS FLOAT)), 1) AS rating,
                        myr.rating AS userrating
                 FROM movies m
                 LEFT JOIN ratings r ON m.id = r.movieid
@@ -145,7 +145,7 @@ namespace Movies.Application.Repositories
                     m.slug,
                     m.YearOfRelease,
                     STRING_AGG(g.name, ', ') AS Genres,
-                    ROUND(AVG(r.rating), 1) AS Rating,
+                    ROUND(AVG(CAST(r.rating AS FLOAT)), 1) AS Rating,
                     myr.rating AS UserRating
                 FROM Movies m
                 LEFT JOIN Genres g ON m.id = g.movieid
@@ -175,7 +175,7 @@ namespace Movies.Application.Repositories
             var movie = await connection.QuerySingleOrDefaultAsync<Movie>(
                 new CommandDefinition(
                 @"SELECT m.*,
-                       ROUND(AVG(r.rating), 1) AS rating,
+                       ROUND(AVG(CAST(r.rating AS FLOAT)), 1) AS rating,
                        myr.rating AS userrating
                   FROM movies m
                   LEFT JOIN ratings r ON m.id = r.movieid
