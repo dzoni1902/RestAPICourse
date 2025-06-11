@@ -78,5 +78,18 @@ namespace Movies.Application.Repositories
 
             return result > 0;
         }
+
+        public async Task<IEnumerable<MovieRating>> GetRatingsForUserAsync(Guid userId, CancellationToken token = default)
+        {
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
+
+            return await connection.QueryAsync<MovieRating>(new CommandDefinition(
+                @"SELECT r.MovieId, r.Rating, m.Slug 
+                  FROM Ratings r
+                  JOIN Movies m ON r.MovieId = m.Id
+                  WHERE r.UserId = @UserId;",
+                new { UserId = userId },
+                cancellationToken: token));
+        }
     }
 }
