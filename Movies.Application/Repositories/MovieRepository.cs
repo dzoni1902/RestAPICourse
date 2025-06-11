@@ -163,8 +163,12 @@ namespace Movies.Application.Repositories
                 Rating = r.Rating,
                 UserRating = r.UserRating,
                 Genres = string.IsNullOrWhiteSpace(r.Genres)
-                         ? new()
-                         : r.Genres.Split(',').ToList()
+                        ? new()
+                        : r.Genres.Split(',')
+                                  .Select(g => g.Trim())
+                                  .Distinct()
+                                  .ToList()
+
             });
         }
 

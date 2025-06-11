@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dapper;
 using Movies.Application.Database;
 using Movies.Application.Models;
@@ -18,6 +19,7 @@ namespace Movies.Application.Repositories
             _dbConnectionFactory = dbConnectionFactory;
         }
 
+        
         public async Task<float?> GetRatingAsync(Guid movieId, CancellationToken token = default)
         {
             using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
@@ -59,6 +61,20 @@ namespace Movies.Application.Repositories
                     VALUES (source.UserId, source.MovieId, source.Rating);",
                 new { MovieId = movieId, UserId = userId, Rating = rating },
                 cancellationToken: token));
+
+            return result > 0;
+        }
+
+        public async Task<bool> DeleteRatingAsync(Guid movieId, Guid userId, CancellationToken token = default)
+        {
+            using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
+
+            var result = await connection.ExecuteAsync(new CommandDefinition(
+                @"DELETE FROM Ratings
+                  WHERE MovieId = @MovieId AND UserId = @UserId;",
+            new { MovieId = movieId, UserId = userId },
+                cancellationToken: token
+            ));
 
             return result > 0;
         }
