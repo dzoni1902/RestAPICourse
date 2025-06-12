@@ -54,6 +54,11 @@ namespace Movies.Application.Services
             return _movieRepository.GetBySlugAsync(slug, userId, token);
         }
 
+        public Task<int> GetCountAsync(string? title, int? yearOfRelease, CancellationToken token = default)
+        {
+            return _movieRepository.GetCountAsync(title, yearOfRelease, token);
+        }
+
         public async Task<Movie?> UpdateAsync(Movie movie, Guid? userId = default, CancellationToken token = default)
         {
             //these validation exceptions will be caught in the API layer and mapped to appropriate HTTP responses (400 Bad Request)
