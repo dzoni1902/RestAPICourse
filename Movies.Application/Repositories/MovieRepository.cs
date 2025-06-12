@@ -137,9 +137,15 @@ namespace Movies.Application.Repositories
         {
             using var connection = await _dbConnectionFactory.CreateConnectionAsync(token);
 
+            var orderClause = string.Empty;
+
+            if (options.SortField is not null)
+            {
+                orderClause = $@"ORDER BY m.{options.SortField} {(options.SortOrder == SortOrder.Ascending ? "ASC" : "DESC")}";
+            }
 
             var result = await connection.QueryAsync<MovieDto>(new CommandDefinition(
-                @"SELECT 
+                $@"SELECT 
                     m.id,
                     m.title,
                     m.slug,
@@ -153,7 +159,8 @@ namespace Movies.Application.Repositories
                 LEFT JOIN Ratings myr ON m.id = myr.movieid AND myr.userid = @userId
                 WHERE (@title IS NULL OR m.title LIKE '%' + @title + '%')
                   AND (@yearofrelease IS NULL OR m.yearofrelease = @yearofrelease)
-                GROUP BY m.id, m.slug, m.title, m.YearOfRelease, myr.rating;",
+                GROUP BY m.id, m.slug, m.title, m.YearOfRelease, myr.rating 
+                {orderClause};",
                 new { userId = options.UserId, title = options.Title, yearofrelease = options.YearOfRelease },
                 cancellationToken: token));
 
