@@ -5,10 +5,12 @@ using Movies.API.Auth;
 using Movies.Application.Services;
 using Movies.Contracts.Requests;
 using Movies.API.Mapping;
+using Asp.Versioning;
 
 namespace Movies.API.Controllers
 {
     [ApiController]
+    [ApiVersion(1.0)]
     public class RatingsController : ControllerBase
     {
         private readonly IRatingService _ratingService;
