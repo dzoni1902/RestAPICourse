@@ -38,43 +38,6 @@ namespace Movies.API.Controllers
             return CreatedAtAction(nameof(Get), new { idOrSlug = response.Id }, response);
         }
 
-        [HttpGet(ApiEndpoints.Movies.Get)]
-        [ProducesResponseType(typeof(MovieResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Get([FromRoute] string idOrSlug, CancellationToken token)
-        {
-            var userId = HttpContext.GetUserId();
-
-            var movie = Guid.TryParse(idOrSlug, out var id)
-                ? await _movieService.GetByIdAsync(id, userId, token)
-                : await _movieService.GetBySlugAsync(idOrSlug, userId, token);
-
-            if (movie is null)
-            {
-                return NotFound();
-            }
-
-            var response = movie.MapToResponse();
-
-            return Ok(response);
-        }
-
-
-        [HttpGet(ApiEndpoints.Movies.GetAll)]
-        [ProducesResponseType(typeof(MoviesResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll([FromQuery] GetAllMoviesRequest request, CancellationToken token)
-        {
-            var userId = HttpContext.GetUserId();
-            var options = request.MapToOptions().WithUser(userId);
-
-            var movies = await _movieService.GetAllAsync(options, token);
-
-            var movieCount = await _movieService.GetCountAsync(options.Title, options.YearOfRelease, token);
-
-            var response = movies.MapToResponse(request.Page, request.PageSize, movieCount);
-            return Ok(response);
-        }
-
         [Authorize(AuthConstants.TrustedMemberPolicyName)]
         [HttpPut(ApiEndpoints.Movies.Update)]
         [ProducesResponseType(typeof(MovieResponse), StatusCodes.Status200OK)]
@@ -109,6 +72,46 @@ namespace Movies.API.Controllers
             }
 
             return Ok();
+        }
+
+
+        [HttpGet(ApiEndpoints.Movies.Get)]
+        //[ResponseCache(Duration = 30, VaryByHeader = "Accept, Accept-Encoding", Location = ResponseCacheLocation.Any)] 
+        [ProducesResponseType(typeof(MovieResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Get([FromRoute] string idOrSlug, CancellationToken token)
+        {
+            var userId = HttpContext.GetUserId();
+
+            var movie = Guid.TryParse(idOrSlug, out var id)
+                ? await _movieService.GetByIdAsync(id, userId, token)
+                : await _movieService.GetBySlugAsync(idOrSlug, userId, token);
+
+            if (movie is null)
+            {
+                return NotFound();
+            }
+
+            var response = movie.MapToResponse();
+
+            return Ok(response);
+        }
+
+
+        [HttpGet(ApiEndpoints.Movies.GetAll)]
+        //[ResponseCache(Duration = 30, VaryByQueryKeys = new[] {"title", "year", "sortBy", "page", "pageSize"}, VaryByHeader = "Accept, Accept-Encoding", Location = ResponseCacheLocation.Any)]
+        [ProducesResponseType(typeof(MoviesResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll([FromQuery] GetAllMoviesRequest request, CancellationToken token)
+        {
+            var userId = HttpContext.GetUserId();
+            var options = request.MapToOptions().WithUser(userId);
+
+            var movies = await _movieService.GetAllAsync(options, token);
+
+            var movieCount = await _movieService.GetCountAsync(options.Title, options.YearOfRelease, token);
+
+            var response = movies.MapToResponse(request.Page, request.PageSize, movieCount);
+            return Ok(response);
         }
     }
 }

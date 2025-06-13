@@ -13,7 +13,6 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 var builder = WebApplication.CreateBuilder(args);
 
 var config = builder.Configuration;
-// Add services to the container.
 
 builder.Services.AddAuthentication(x =>
 {
@@ -50,6 +49,8 @@ builder.Services.AddApiVersioning(x =>
     x.ApiVersionReader = new MediaTypeApiVersionReader("api-version");
 }).AddMvc().AddApiExplorer();
 
+//builder.Services.AddResponseCaching();
+
 builder.Services.AddControllers();
 
 builder.Services.AddHealthChecks()
@@ -84,6 +85,9 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+//app.UseCors();
+//app.UseResponseCaching();
 
 app.UseMiddleware<ValidationMappingMiddleware>();
 
